@@ -35,11 +35,26 @@ const user = sequelize.define(
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
     tableName: "users",
     timestamps: false,
+
+    defaultScope: {
+      attributes: {
+        exclude: ["password_hash"],
+      },
+    },
+
+    scopes: {
+      withPassword: {
+        attributes: {
+          include: ["password_hash"],
+        },
+      },
+    },
   },
 );
 
