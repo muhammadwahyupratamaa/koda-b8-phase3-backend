@@ -1,11 +1,15 @@
 import { Router } from "express";
-import { createLink, getMyLinks } from "../controllers/link.controller.js";
+import {
+  createLink,
+  getMyLinks,
+  redirectLinks,
+} from "../controllers/link.controller.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = Router();
-router.use(authMiddleware);
 
-router.post("/links", createLink);
-router.get("/links", getMyLinks);
+router.post("/links", authMiddleware, createLink);
+router.get("/links", authMiddleware, getMyLinks);
+router.get("/:slug", redirectLinks);
 
 export default router;

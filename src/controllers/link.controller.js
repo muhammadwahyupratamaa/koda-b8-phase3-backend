@@ -34,3 +34,24 @@ export async function getMyLinks(req, res) {
     });
   }
 }
+
+export async function redirectLinks(req, res) {
+  try {
+    const { slug } = req.params;
+    const link = await linkModel.findBySlug(slug);
+
+    if (!link) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "LINK NOT FOUND",
+      });
+    }
+
+    return res.redirect(link.original_url);
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}

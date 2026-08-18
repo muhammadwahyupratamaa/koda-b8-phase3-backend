@@ -17,7 +17,17 @@ async function findByUserId(userId) {
   });
 }
 
+async function findBySlug(slug) {
+  return link.findOne({
+    where: {
+      slug: slug,
+      deleted_at: null,
+    },
+  });
+}
+
 export default {
   create,
   findByUserId,
+  findBySlug,
 };
