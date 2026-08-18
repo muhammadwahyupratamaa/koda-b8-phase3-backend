@@ -1,40 +1,57 @@
 import { constants } from "node:http2";
 import linkModel from "../models/link.model.js";
 
+function generateSlug(length = 6) {
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let slug = "";
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    slug += characters[randomIndex];
+  }
+
+  return slug;
+}
+
 export async function createLink(req, res) {
   try {
     const { original_url, slug } = req.body;
     const reservedSlugs = ["api", "login", "register", "dashboard"];
 
-    if (reservedSlugs.includes(slug.toLowerCase())){
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-        success: false,
-        message: "this slug is reserved",
-      });
+    let finalSlug = slug;
+
+    if (!finalSlug) {
+      do {
+        finalSlug = generateSlug();
+      } while (await linkModel.findBySlug(finalSlug));
+    } else {
+      if (finalSlug.length < 3 || finalSlug.length > 50) {
+        return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+          success: false,
+          message: "Slug must be between 3 and 50 characters",
+        });
+      }
+
+      if (!/^[a-zA-Z0-9-]+$/.test(finalSlug)) {
+        return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+          success: false,
+          message: "Slug can only contain letters, numbers, and hyphens",
+        });
+      }
+
+      if (reservedSlugs.includes(finalSlug.toLowerCase())) {
+        return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+          success: false,
+          message: "This slug is reserved",
+        });
+      }
     }
 
-    if (!slug) {
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-        success: false,
-        message: "slug is required",
-      });
-    }
-
-    if (slug.length < 3 || slug.length > 50) {
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-        success: false,
-        message: "Slug must be between 3 and 50 characters",
-      });
-    }
-
-    if (!/^[a-zA-Z0-9-]+$/.test(slug)) {
-      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
-        success: false,
-        message: "Slug can only contain letters, numbers, and hyphens",
-      });
-    }
-
-    const newLink = await linkModel.create(req.user.id, original_url, slug);
+    const newLink = await linkModel.create(
+      req.user.id,
+      original_url,
+      finalSlug,
+    );
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
@@ -42,6 +59,13 @@ export async function createLink(req, res) {
       data: newLink,
     });
   } catch (error) {
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(constants.HTTP_STATUS_CONFLICT).json({
+        success: false,
+        message: "Slug already exists",
+      });
+    }
+    
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,
