@@ -28,7 +28,6 @@ export async function up(queryInterface) {
     slug: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true,
     },
 
     created_at: {
@@ -42,6 +41,12 @@ export async function up(queryInterface) {
       allowNull: true,
     },
   });
+
+  await queryInterface.sequelize.query(`
+    CREATE UNIQUE INDEX idx_links_slug
+    ON links(slug)
+    WHERE deleted_at IS NULL;
+  `);
 }
 
 export async function down(queryInterface) {

@@ -47,7 +47,7 @@ export async function redirectLinks(req, res) {
       });
     }
 
-    return res.redirect(link.original_url);
+    return res.redirect(301, link.original_url);
   } catch (error) {
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
