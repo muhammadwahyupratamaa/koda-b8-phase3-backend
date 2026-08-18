@@ -1,6 +1,7 @@
 import { constants } from "node:http2";
 import linkModel from "../models/link.model.js";
 import sequelize from "../config/database.js";
+import redis from "../config/redis.js";
 
 function generateSlug(length = 6) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -82,7 +83,20 @@ export async function createLink(req, res) {
 
 export async function getMyLinks(req, res) {
   try {
+    const cacheKey = `links:${req.user.id}`;
+
+    const cachedLinks = await redis.get(cacheKey);
+
+    if (cachedLinks) {
+      return res.status(constants.HTTP_STATUS_OK).json({
+        success: true,
+        data: JSON.parse(cachedLinks),
+      });
+    }
+
     const links = await linkModel.findByUserId(req.user.id);
+
+    await redis.set(cacheKey, JSON.stringify(links));
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
