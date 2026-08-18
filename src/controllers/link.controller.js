@@ -55,3 +55,36 @@ export async function redirectLinks(req, res) {
     });
   }
 }
+
+export async function deleteLink(req, res) {
+  try {
+    const { id } = req.params;
+    const link = await linkModel.findById(id);
+
+    if (!link) {
+      return res.status(constants.HTTP_STATUS_NOT_FOUND).json({
+        success: false,
+        message: "LINK NOT FOUND",
+      });
+    }
+
+    if (link.user_id !== req.user.id) {
+      return res.status(constants.HTTP_STATUS_FORBIDDEN).json({
+        success: false,
+        message: "You are not allowed to delete this link",
+      });
+    }
+
+    await linkModel.softDelete(id);
+
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      message: "Link deleted successfully",
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}

@@ -26,8 +26,32 @@ async function findBySlug(slug) {
   });
 }
 
+async function findById(id) {
+  return link.findOne({
+    where: {
+      id,
+      deleted_at: null,
+    },
+  });
+}
+
+async function softDelete(id) {
+  return link.update(
+    {
+      deleted_at: new Date(),
+    },
+    {
+      where: {
+        id,
+      },
+    },
+  );
+}
+
 export default {
   create,
   findByUserId,
   findBySlug,
+  findById,
+  softDelete,
 };
