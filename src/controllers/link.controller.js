@@ -1,5 +1,6 @@
 import { constants } from "node:http2";
 import linkModel from "../models/link.model.js";
+import sequelize from "../config/database.js";
 
 function generateSlug(length = 6) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -20,11 +21,13 @@ export async function createLink(req, res) {
 
     let finalSlug = slug;
 
+    // Auto-generate slug
     if (!finalSlug) {
       do {
         finalSlug = generateSlug();
       } while (await linkModel.findBySlug(finalSlug));
     } else {
+      // Custom slug validation
       if (finalSlug.length < 3 || finalSlug.length > 50) {
         return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
           success: false,
@@ -47,11 +50,15 @@ export async function createLink(req, res) {
       }
     }
 
-    const newLink = await linkModel.create(
-      req.user.id,
-      original_url,
-      finalSlug,
-    );
+    // Database transaction
+    const newLink = await sequelize.transaction(async (transaction) => {
+      return linkModel.create(
+        req.user.id,
+        original_url,
+        finalSlug,
+        transaction,
+      );
+    });
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
@@ -65,7 +72,7 @@ export async function createLink(req, res) {
         message: "Slug already exists",
       });
     }
-    
+
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,

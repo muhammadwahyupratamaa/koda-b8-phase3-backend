@@ -1,11 +1,16 @@
 import link from "./link.js";
 
-async function create(userId, originalUrl, slug) {
-  return link.create({
-    user_id: userId,
-    original_url: originalUrl,
-    slug: slug,
-  });
+async function create(userId, originalUrl, slug, transaction) {
+  return link.create(
+    {
+      user_id: userId,
+      original_url: originalUrl,
+      slug: slug,
+    },
+    {
+      transaction,
+    },
+  );
 }
 
 async function findByUserId(userId) {
