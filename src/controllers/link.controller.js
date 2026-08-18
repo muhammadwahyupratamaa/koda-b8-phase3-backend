@@ -4,6 +4,28 @@ import linkModel from "../models/link.model.js";
 export async function createLink(req, res) {
   try {
     const { original_url, slug } = req.body;
+
+    if (!slug) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "slug is required",
+      });
+    }
+    
+    if (slug.length < 3 || slug.length > 50) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Slug must be between 3 and 50 characters",
+      });
+    }
+
+    if (!/^[a-zA-Z0-9-]+$/.test(slug)) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "Slug can only contain letters, numbers, and hyphens",
+      });
+    }
+
     const newLink = await linkModel.create(req.user.id, original_url, slug);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
