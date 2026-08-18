@@ -19,5 +19,18 @@ export async function createLink(req, res) {
   }
 }
 
+export async function getMyLinks(req, res) {
+  try {
+    const links = await linkModel.findByUserId(req.user.id);
 
-
+    return res.status(constants.HTTP_STATUS_OK).json({
+      success: true,
+      data: links,
+    });
+  } catch (error) {
+    return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}

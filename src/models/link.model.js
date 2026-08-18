@@ -8,6 +8,16 @@ async function create(userId, originalUrl, slug) {
   });
 }
 
+async function findByUserId(userId) {
+  return link.findAll({
+    where: {
+      user_id: userId,
+      deleted_at: null,
+    },
+  });
+}
+
 export default {
   create,
+  findByUserId,
 };
