@@ -4,6 +4,14 @@ import linkModel from "../models/link.model.js";
 export async function createLink(req, res) {
   try {
     const { original_url, slug } = req.body;
+    const reservedSlugs = ["api", "login", "register", "dashboard"];
+
+    if (reservedSlugs.includes(slug.toLowerCase())){
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: "this slug is reserved",
+      });
+    }
 
     if (!slug) {
       return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
@@ -11,7 +19,7 @@ export async function createLink(req, res) {
         message: "slug is required",
       });
     }
-    
+
     if (slug.length < 3 || slug.length > 50) {
       return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
         success: false,
