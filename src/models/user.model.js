@@ -14,9 +14,8 @@ async function findByEmail(email, options = {}) {
   return user.findOne(query);
 }
 
-async function create(name, email, passwordHash) {
+async function create( email, passwordHash) {
   return user.create({
-    name,
     email,
     password_hash: passwordHash,
   });

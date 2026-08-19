@@ -11,7 +11,7 @@ export async function up(queryInterface) {
 
     name: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: true,
     },
 
     email: {
