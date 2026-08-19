@@ -61,6 +61,9 @@ export async function createLink(req, res) {
       );
     });
 
+    // Clear user links cache after sukses create
+    await redis.del(`links:${req.user.id}`);
+
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
       message: "Link created successfully",
@@ -151,6 +154,8 @@ export async function deleteLink(req, res) {
     }
 
     await linkModel.softDelete(id);
+
+    await redis.del(`links:${req.user.id}`);
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
