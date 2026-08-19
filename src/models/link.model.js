@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import link from "./link.js";
 
 async function create(userId, originalUrl, slug, transaction) {
@@ -13,19 +14,36 @@ async function create(userId, originalUrl, slug, transaction) {
   );
 }
 
-async function findByUserId(userId) {
+async function findByUserId(userId, search) {
+  const where = {
+    user_id: userId,
+    deleted_at: null,
+  };
+
+  if (search) {
+    where[Op.or] = [
+      {
+        slug: {
+          [Op.iLike]: `%${search}%`,
+        },
+      },
+      {
+        original_url: {
+          [Op.iLike]: `%${search}%`,
+        },
+      },
+    ];
+  }
+
   return link.findAll({
-    where: {
-      user_id: userId,
-      deleted_at: null,
-    },
+    where,
   });
 }
 
 async function findBySlug(slug) {
   return link.findOne({
     where: {
-      slug: slug,
+      slug,
       deleted_at: null,
     },
   });

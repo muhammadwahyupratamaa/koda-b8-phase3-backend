@@ -86,6 +86,17 @@ export async function createLink(req, res) {
 
 export async function getMyLinks(req, res) {
   try {
+    const { search } = req.query;
+
+    if (search) {
+      const links = await linkModel.findByUserId(req.user.id, search);
+
+      return res.status(constants.HTTP_STATUS_OK).json({
+        success: true,
+        data: links,
+      });
+    }
+
     const cacheKey = `links:${req.user.id}`;
 
     const cachedLinks = await redis.get(cacheKey);
