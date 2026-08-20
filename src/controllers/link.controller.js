@@ -88,33 +88,53 @@ export async function getMyLinks(req, res) {
   try {
     const { search } = req.query;
 
-    if (search) {
-      const links = await linkModel.findByUserId(req.user.id, search);
+    const hasPagination =
+      req.query.page !== undefined || req.query.limit !== undefined;
+
+    // Normal request → Redis
+    if (!search && !hasPagination) {
+      const cacheKey = `links:${req.user.id}`;
+
+      const cachedLinks = await redis.get(cacheKey);
+
+      if (cachedLinks) {
+        return res.status(constants.HTTP_STATUS_OK).json({
+          success: true,
+          data: JSON.parse(cachedLinks),
+        });
+      }
+
+      const { rows } = await linkModel.findByUserId(req.user.id);
+
+      await redis.set(cacheKey, JSON.stringify(rows));
 
       return res.status(constants.HTTP_STATUS_OK).json({
         success: true,
-        data: links,
+        data: rows,
       });
     }
 
-    const cacheKey = `links:${req.user.id}`;
+    // Search / Pagination
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
 
-    const cachedLinks = await redis.get(cacheKey);
-
-    if (cachedLinks) {
-      return res.status(constants.HTTP_STATUS_OK).json({
-        success: true,
-        data: JSON.parse(cachedLinks),
-      });
-    }
-
-    const links = await linkModel.findByUserId(req.user.id);
-
-    await redis.set(cacheKey, JSON.stringify(links));
+    const { rows, count } = await linkModel.findByUserId(
+      req.user.id,
+      search,
+      limit,
+      offset,
+    );
 
     return res.status(constants.HTTP_STATUS_OK).json({
       success: true,
-      data: links,
+      data: rows,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
     return res.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).json({

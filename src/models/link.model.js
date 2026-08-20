@@ -14,7 +14,7 @@ async function create(userId, originalUrl, slug, transaction) {
   );
 }
 
-async function findByUserId(userId, search) {
+async function findByUserId(userId, search, limit, offset) {
   const where = {
     user_id: userId,
     deleted_at: null,
@@ -35,8 +35,11 @@ async function findByUserId(userId, search) {
     ];
   }
 
-  return link.findAll({
+  return link.findAndCountAll({
     where,
+    limit,
+    offset,
+    order: [["created_at", "DESC"]],
   });
 }
 
