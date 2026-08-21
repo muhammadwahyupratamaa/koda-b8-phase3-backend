@@ -2,6 +2,7 @@ import { constants } from "node:http2";
 import linkModel from "../models/link.model.js";
 import sequelize from "../config/database.js";
 import redis from "../config/redis.js";
+import { createLinkSchema } from "../schemas/link.schema.js";
 
 function generateSlug(length = 6) {
   const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -17,7 +18,16 @@ function generateSlug(length = 6) {
 
 export async function createLink(req, res) {
   try {
-    const { original_url, slug } = req.body;
+    const result = createLinkSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: result.error.issues[0].message,
+      });
+    }
+
+    const { original_url, slug } = result.data;
+
     const reservedSlugs = ["api", "login", "register", "dashboard"];
 
     let finalSlug = slug;
