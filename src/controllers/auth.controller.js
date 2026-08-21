@@ -2,6 +2,7 @@ import { constants } from "node:http2";
 import bcrypt from "bcrypt";
 import userModel from "../models/user.model.js";
 import libjwt from "../lib/jwt.js";
+import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 
 /**
  *
@@ -11,8 +12,16 @@ import libjwt from "../lib/jwt.js";
  */
 export async function register(req, res) {
   try {
-    const { email, password } = req.body;
+    const result = registerSchema.safeParse(req.body);
 
+    if (!result.success) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: result.error.issues[0].message,
+      });
+    }
+
+    const { email, password } = result.data;
     const existingUser = await userModel.findByEmail(email);
 
     if (existingUser) {
@@ -23,8 +32,8 @@ export async function register(req, res) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-
-    const newUser = await userModel.create(email, passwordHash);
+    
+    await userModel.create(email, passwordHash);
 
     return res.status(constants.HTTP_STATUS_CREATED).json({
       success: true,
@@ -40,7 +49,16 @@ export async function register(req, res) {
 
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const result = loginSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(constants.HTTP_STATUS_BAD_REQUEST).json({
+        success: false,
+        message: result.error.issues[0].message,
+      });
+    }
+
+    const { email, password } = result.data;
     const user = await userModel.findByEmail(email, {
       withPassword: true,
     });
